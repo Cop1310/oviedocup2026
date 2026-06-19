@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oviedo Cup 2026 – CD Ciudad de los Ángeles</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+    padding: 20px 16px 16px;
+    text-align: center;
+    border-bottom: 4px solid #c9a227;
+    position: relative;
+  }
+
+  header h1 {
+    color: #c9a227;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  header p {
+    color: #aaa;
+    font-size: 0.78rem;
+    margin-top: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .admin-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(201,162,39,0.5);
+    color: #c9a227;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 6px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .admin-toggle.on { background: #c9a227; color: #1a1a2e; }
+
+  .main-tabs {
+    display: flex;
+    background: #1a1a2e;
+    border-bottom: 3px solid #c9a227;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+  }
+
+  .main-tab {
+    flex: 1;
+    padding: 14px 8px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #888;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: none;
+    background: none;
+  }
+
+  .main-tab.active {
+    color: #c9a227;
+    background: rgba(201,162,39,0.1);
+    border-bottom: 3px solid #c9a227;
+    margin-bottom: -3px;
+  }
+
+  .main-section { display: none; }
+  .main-section.visible { display: block; }
+
+  .day-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    background: #2d2d44;
+    border-bottom: 1px solid #444;
+    position: sticky;
+    top: 49px;
+    z-index: 150;
+  }
+
+  .day-tab {
+    flex: 1;
+    min-width: 70px;
+    padding: 11px 6px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: #aaa;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: none;
+    background: none;
+  }
+
+  .day-tab.active {
+    color: #fff;
+    background: rgba(255,255,255,0.06);
+    border-bottom: 2px solid #c9a227;
+    margin-bottom: -1px;
+  }
+
+  .day-section { display: none; padding: 12px 10px; }
+  .day-section.visible { display: block; }
+
+  .day-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #888;
+    text-transform: uppercase;
+    padding: 8px 4px 10px;
+  }
+
+  .match-card {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    border-left: 5px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .match-card.alevin12  { border-left-color: #e74c3c; }
+  .match-card.cadete    { border-left-color: #27ae60; }
+  .match-card.alevin11  { border-left-color: #f39c12; }
+  .match-card.juvenil   { border-left-color: #2980b9; }
+  .match-card.infantil  { border-left-color: #8e44ad; }
+
+  .card-top { display: flex; align-items: center; padding: 12px 14px 8px; gap: 10px; }
+
+  .badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .alevin12 .badge  { background: #fde8e8; color: #c0392b; }
+  .cadete .badge    { background: #e8f8ee; color: #1e8449; }
+  .alevin11 .badge  { background: #fef5e7; color: #d68910; }
+  .juvenil .badge   { background: #e8f4fb; color: #1a6fa0; }
+  .infantil .badge  { background: #f5eef8; color: #6c3483; }
+
+  .match-time { font-size: 1.15rem; font-weight: 900; color: #1a1a2e; margin-left: auto; }
+
+  .rival-row { padding: 0 14px 10px; display: flex; align-items: center; gap: 8px; }
+  .rival-name { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; }
+  .rival-label { font-size: 0.65rem; color: #999; font-weight: 400; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .result-pill {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 900;
+    background: #1a1a2e;
+    color: #c9a227;
+    padding: 3px 10px;
+    border-radius: 8px;
+  }
+
+  .card-bottom { display: flex; border-top: 1px solid #f0f0f0; }
+
+  .campo-info {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: #555;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+  }
+  .campo-info strong { font-size: 0.8rem; color: #222; }
+
+  .gps-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: #1a1a2e;
+    color: #c9a227;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+  .pin-icon { font-size: 1.1rem; line-height: 1; }
+
+  .card-admin-row {
+    display: none;
+    gap: 6px;
+    padding: 8px 14px 12px;
+    border-top: 1px dashed #ddd;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  body.admin-mode .card-admin-row { display: flex; }
+
+  .result-input {
+    width: 38px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 5px 2px;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .save-result-btn, .delete-match-btn, .delete-player-btn {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .save-result-btn { background: #27ae60; color: #fff; }
+  .delete-match-btn, .delete-player-btn { background: #e74c3c; color: #fff; margin-left: auto; }
+
+  .add-match-box, .add-player-box {
+    display: none;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 2px dashed #c9a227;
+  }
+  body.admin-mode .add-match-box, body.admin-mode .add-player-box { display: block; }
+
+  .add-match-box h3, .add-player-box h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #1a1a2e;
+    margin-bottom: 10px;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+
+  .form-grid label, .form-full label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .form-grid input, .form-grid select, .form-full input, .form-full select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+
+  .form-full { margin-bottom: 8px; }
+
+  .photo-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .photo-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #eee;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #ddd;
+  }
+
+  .photo-preview.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-size: 1.3rem;
+  }
+
+  .photo-input-label {
+    flex: 1;
+    padding: 9px 12px;
+    background: #f4f4f4;
+    border: 1.5px dashed #ccc;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #666;
+    cursor: pointer;
+  }
+
+  .add-match-submit, .add-player-submit {
+    width: 100%;
+    padding: 11px;
+    background: #1a1a2e;
+    color: #c9a227;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+
+  .cat-tabs {
+    display: flex;
+    overflow-x: auto;
+    background: #2d2d44;
+    border-bottom: 1px solid #444;
+    position: sticky;
+    top: 49px;
+    z-index: 150;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+
+  .cat-tab {
+    flex: 1;
+    min-width: 70px;
+    padding: 11px 6px 9px;
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #aaa;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .cat-tab .dot { display: block; width: 8px; height: 8px; border-radius: 50%; margin: 0 auto 4px; }
+
+  .cat-tab.juvenil .dot  { background: #2980b9; }
+  .cat-tab.cadete .dot   { background: #27ae60; }
+  .cat-tab.infantil .dot { background: #8e44ad; }
+  .cat-tab.alevin12 .dot { background: #e74c3c; }
+  .cat-tab.alevin11 .dot { background: #f39c12; }
+
+  .cat-tab.juvenil.active  { color: #fff; border-bottom-color: #2980b9; background: rgba(255,255,255,0.06); }
+  .cat-tab.cadete.active   { color: #fff; border-bottom-color: #27ae60; background: rgba(255,255,255,0.06); }
+  .cat-tab.infantil.active { color: #fff; border-bottom-color: #8e44ad; background: rgba(255,255,255,0.06); }
+  .cat-tab.alevin12.active { color: #fff; border-bottom-color: #e74c3c; background: rgba(255,255,255,0.06); }
+  .cat-tab.alevin11.active { color: #fff; border-bottom-color: #f39c12; background: rgba(255,255,255,0.06); }
+
+  .cat-panel { display: none; }
+  .cat-panel.visible { display: block; }
+
+  .cat-title {
+    font-size: 1rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 14px 14px 10px;
+  }
+
+  .cat-panel[data-cat="juvenil"] .cat-title  { color: #1a6fa0; }
+  .cat-panel[data-cat="cadete"] .cat-title   { color: #1e8449; }
+  .cat-panel[data-cat="infantil"] .cat-title { color: #6c3483; }
+  .cat-panel[data-cat="alevin12"] .cat-title { color: #c0392b; }
+  .cat-panel[data-cat="alevin11"] .cat-title { color: #d68910; }
+
+  .subtabs { display: flex; padding: 0 10px 10px; gap: 8px; }
+
+  .subtab-btn {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 20px;
+    border: 1.5px solid #ddd;
+    background: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #777;
+    cursor: pointer;
+  }
+
+  .cat-panel[data-cat="juvenil"] .subtab-btn.active  { background: #2980b9; border-color: #2980b9; color: #fff; }
+  .cat-panel[data-cat="cadete"] .subtab-btn.active   { background: #27ae60; border-color: #27ae60; color: #fff; }
+  .cat-panel[data-cat="infantil"] .subtab-btn.active { background: #8e44ad; border-color: #8e44ad; color: #fff; }
+  .cat-panel[data-cat="alevin12"] .subtab-btn.active { background: #e74c3c; border-color: #e74c3c; color: #fff; }
+  .cat-panel[data-cat="alevin11"] .subtab-btn.active { background: #f39c12; border-color: #f39c12; color: #fff; }
+
+  .subpanel { display: none; padding: 0 10px 16px; }
+  .subpanel.visible { display: block; }
+
+  .team-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .team-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .team-item.own { background: #1a1a2e; color: #c9a227; border: 2px solid #c9a227; }
+
+  .team-tag {
+    font-size: 0.6rem;
+    font-weight: 800;
+    background: #c9a227;
+    color: #1a1a2e;
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .player-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .player-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 14px 10px 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-align: center;
+    position: relative;
+  }
+
+  .player-photo {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #1a1a2e;
+    border: 2px solid #c9a227;
+  }
+
+  .player-photo.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c9a227;
+    font-weight: 900;
+    font-size: 1.1rem;
+  }
+
+  .player-number-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #1a1a2e;
+    color: #c9a227;
+    font-weight: 900;
+    font-size: 0.68rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .player-name { font-weight: 800; font-size: 0.8rem; text-transform: uppercase; line-height: 1.2; }
+
+  .player-item .delete-player-btn { display: none; }
+  body.admin-mode .player-item .delete-player-btn { display: inline-block; margin: 0 auto; }
+
+  .empty-msg {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.85rem;
+    padding: 30px 14px;
+    line-height: 1.5;
+    grid-column: 1 / -1;
+  }
+
+  footer { text-align: center; padding: 24px; font-size: 0.7rem; color: #aaa; }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+
+  .modal-box { background: #fff; border-radius: 14px; padding: 22px; width: 85%; max-width: 320px; text-align: center; }
+  .modal-box h3 { font-size: 1rem; margin-bottom: 14px; color: #1a1a2e; }
+
+  .modal-box input {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .modal-box button {
+    width: 100%;
+    padding: 11px;
+    background: #1a1a2e;
+    color: #c9a227;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: 8px;
+  }
+
+  .modal-cancel { background: none !important; color: #999 !important; font-weight: 600 !important; }
+  .modal-error { color: #e74c3c; font-size: 0.75rem; margin-bottom: 8px; display: none; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a2e;
+    color: #c9a227;
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    z-index: 600;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Oviedo Cup 2026</h1>
+  <p>CD Ciudad de los Ángeles</p>
+  <button class="admin-toggle" id="adminToggleBtn" onclick="onAdminToggleClick()">🔒 Modo edición</button>
+</header>
+
+<div class="main-tabs">
+  <button class="main-tab active" onclick="showMain('partidos', this)">Partidos</button>
+  <button class="main-tab" onclick="showMain('equipos', this)">Equipos</button>
+</div>
+
+<!-- ======================= PARTIDOS ======================= -->
+<div class="main-section visible" id="main-partidos">
+  <div class="day-tabs" id="dayTabsBar"></div>
+  <div id="daysContainer"></div>
+</div>
+
+<!-- ======================= EQUIPOS ======================= -->
+<div class="main-section" id="main-equipos">
+
+  <div class="cat-tabs">
+    <button class="cat-tab juvenil active" onclick="showCat('juvenil', this)"><span class="dot"></span>Juvenil</button>
+    <button class="cat-tab cadete" onclick="showCat('cadete', this)"><span class="dot"></span>Cadete</button>
+    <button class="cat-tab infantil" onclick="showCat('infantil', this)"><span class="dot"></span>Infantil</button>
+    <button class="cat-tab alevin12" onclick="showCat('alevin12', this)"><span class="dot"></span>Alev. 12</button>
+    <button class="cat-tab alevin11" onclick="showCat('alevin11', this)"><span class="dot"></span>Alev. 11</button>
+  </div>
+
+  <div class="cat-panel visible" data-cat="juvenil">
+    <div class="cat-title">Juvenil</div>
+    <div class="subtabs">
+      <button class="subtab-btn active" onclick="showSub(this,'juvenil','equipos')">Equipos</button>
+      <button class="subtab-btn" onclick="showSub(this,'juvenil','jugadores')">Jugadores</button>
+    </div>
+    <div class="subpanel visible" data-sub="equipos">
+      <div class="team-list">
+        <div class="team-item own">CD Ciudad de los Ángeles <span class="team-tag">Nuestro equipo</span></div>
+        <div class="team-item">CD La Braña</div>
+        <div class="team-item">Real Oviedo Internacional</div>
+        <div class="team-item">Caudal</div>
+      </div>
+    </div>
+    <div class="subpanel" data-sub="jugadores">
+      <div class="add-player-box" data-cat="juvenil"></div>
+      <div class="player-list" data-cat-players="juvenil"></div>
+    </div>
+  </div>
+
+  <div class="cat-panel" data-cat="cadete">
+    <div class="cat-title">Cadete</div>
+    <div class="subtabs">
+      <button class="subtab-btn active" onclick="showSub(this,'cadete','equipos')">Equipos</button>
+      <button class="subtab-btn" onclick="showSub(this,'cadete','jugadores')">Jugadores</button>
+    </div>
+    <div class="subpanel visible" data-sub="equipos">
+      <div class="team-list">
+        <div class="team-item own">CD Ciudad de los Ángeles <span class="team-tag">Nuestro equipo</span></div>
+        <div class="team-item">AD Vila do Corpus B</div>
+        <div class="team-item">CD Deva</div>
+        <div class="team-item">CD Romanón</div>
+        <div class="team-item">Real Oviedo</div>
+      </div>
+    </div>
+    <div class="subpanel" data-sub="jugadores">
+      <div class="add-player-box" data-cat="cadete"></div>
+      <div class="player-list" data-cat-players="cadete"></div>
+    </div>
+  </div>
+
+  <div class="cat-panel" data-cat="infantil">
+    <div class="cat-title">Infantil</div>
+    <div class="subtabs">
+      <button class="subtab-btn active" onclick="showSub(this,'infantil','equipos')">Equipos</button>
+      <button class="subtab-btn" onclick="showSub(this,'infantil','jugadores')">Jugadores</button>
+    </div>
+    <div class="subpanel visible" data-sub="equipos">
+      <div class="team-list">
+        <div class="team-item own">CD Ciudad de los Ángeles <span class="team-tag">Nuestro equipo</span></div>
+        <div class="team-item">UD Llanera</div>
+        <div class="team-item">UD San Claudio</div>
+        <div class="team-item">EF Mareo</div>
+      </div>
+    </div>
+    <div class="subpanel" data-sub="jugadores">
+      <div class="add-player-box" data-cat="infantil"></div>
+      <div class="player-list" data-cat-players="infantil"></div>
+    </div>
+  </div>
+
+  <div class="cat-panel" data-cat="alevin12">
+    <div class="cat-title">Alevín Sub 12</div>
+    <div class="subtabs">
+      <button class="subtab-btn active" onclick="showSub(this,'alevin12','equipos')">Equipos</button>
+      <button class="subtab-btn" onclick="showSub(this,'alevin12','jugadores')">Jugadores</button>
+    </div>
+    <div class="subpanel visible" data-sub="equipos">
+      <div class="team-list">
+        <div class="team-item own">CD Ciudad de los Ángeles <span class="team-tag">Nuestro equipo</span></div>
+        <div class="team-item">CD Covadonga Castañales</div>
+        <div class="team-item">UP Langreo B</div>
+        <div class="team-item">CD Montevil</div>
+      </div>
+    </div>
+    <div class="subpanel" data-sub="jugadores">
+      <div class="add-player-box" data-cat="alevin12"></div>
+      <div class="player-list" data-cat-players="alevin12"></div>
+    </div>
+  </div>
+
+  <div class="cat-panel" data-cat="alevin11">
+    <div class="cat-title">Alevín Sub 11</div>
+    <div class="subtabs">
+      <button class="subtab-btn active" onclick="showSub(this,'alevin11','equipos')">Equipos</button>
+      <button class="subtab-btn" onclick="showSub(this,'alevin11','jugadores')">Jugadores</button>
+    </div>
+    <div class="subpanel visible" data-sub="equipos">
+      <div class="team-list">
+        <div class="team-item own">CD Ciudad de los Ángeles <span class="team-tag">Nuestro equipo</span></div>
+        <div class="team-item">EF Jin</div>
+        <div class="team-item">Alcázar CF</div>
+        <div class="team-item">Astur CF</div>
+      </div>
+    </div>
+    <div class="subpanel" data-sub="jugadores">
+      <div class="add-player-box" data-cat="alevin11"></div>
+      <div class="player-list" data-cat-players="alevin11"></div>
+    </div>
+  </div>
+
+</div><!-- /main-equipos -->
+
+<footer>Oviedo Cup 2026 · CD Ciudad de los Ángeles</footer>
+
+<div class="modal-overlay" id="pwModal">
+  <div class="modal-box">
+    <h3>🔒 Modo edición</h3>
+    <div class="modal-error" id="pwError">Contraseña incorrecta</div>
+    <input type="password" id="pwInput" placeholder="Introduce la clave" />
+    <button onclick="checkPassword()">Entrar</button>
+    <button class="modal-cancel" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  /* ============== CONFIG ============== */
+  const ADMIN_PASSWORD = "cdca2026"; // <-- cambia aquí la clave
+  const FIELD_URLS = {
+    "MAREO": "https://maps.app.goo.gl/JqyTBfT7dJ7G8Vzw7",
+    "MAXIMINO": "https://maps.app.goo.gl/q9yN71Ak1zk7Aqdn9"
+  };
+  const CATEGORY_LABELS = {
+    alevin12: "Alevín Sub 12", cadete: "Cadete", alevin11: "Alevín Sub 11",
+    juvenil: "Juvenil", infantil: "Infantil"
+  };
+  const DAY_LABELS = { "20": "Sábado 20", "21": "Domingo 21" };
+  const CATS = ["alevin12","cadete","alevin11","juvenil","infantil"];
+
+  let isAdmin = false;
+  let matches = [];
+  let players = {}; // { cat: [ {id, number, name, photo(base64 or null)} ] }
+
+  const SEED_MATCHES = [
+    {id:"m1",  day:"20", time:"11:00", cat:"alevin12", rival:"CD Covadonga Castañales", campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {id:"m2",  day:"20", time:"11:30", cat:"cadete",   rival:"AD Vila do Corpus B",      campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {id:"m3",  day:"20", time:"11:45", cat:"alevin11", rival:"EF Jin",                   campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {id:"m4",  day:"20", time:"12:45", cat:"juvenil",  rival:"CD La Braña",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {id:"m5",  day:"20", time:"13:45", cat:"infantil", rival:"UD Llanera",               campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {id:"m6",  day:"20", time:"17:00", cat:"alevin12", rival:"UP Langreo B",             campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {id:"m7",  day:"20", time:"17:30", cat:"cadete",   rival:"CD Deva",                  campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {id:"m8",  day:"20", time:"17:45", cat:"alevin11", rival:"Alcázar CF",               campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {id:"m9",  day:"20", time:"18:45", cat:"infantil", rival:"UD San Claudio",           campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {id:"m10", day:"20", time:"19:15", cat:"juvenil",  rival:"Real Oviedo Internacional",campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {id:"m11", day:"21", time:"9:45",  cat:"cadete",   rival:"CD Romanón",               campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {id:"m12", day:"21", time:"11:45", cat:"infantil", rival:"EF Mareo",                 campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {id:"m13", day:"21", time:"12:45", cat:"alevin11", rival:"Astur CF",                 campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {id:"m14", day:"21", time:"13:00", cat:"juvenil",  rival:"Caudal",                   campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {id:"m15", day:"21", time:"15:30", cat:"cadete",   rival:"Real Oviedo",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {id:"m16", day:"21", time:"17:15", cat:"alevin12", rival:"CD Montevil",              campo:"Mareo Nº3 F8-1", gps:"MAREO", result:null}
+  ];
+
+  const SEED_PLAYERS_INFANTIL = [
+    {id:"p1",  number:8,  name:"Ortiz Jr", photo:null},
+    {id:"p2",  number:11, name:"Rubén", photo:null},
+    {id:"p3",  number:14, name:"Guti", photo:null},
+    {id:"p4",  number:19, name:"Alonso", photo:null},
+    {id:"p5",  number:20, name:"Ángel", photo:null},
+    {id:"p6",  number:6,  name:"Dario", photo:null},
+    {id:"p7",  number:12, name:"Talmaci", photo:null},
+    {id:"p8",  number:99, name:"Dani", photo:null},
+    {id:"p9",  number:27, name:"Polina", photo:null},
+    {id:"p10", number:28, name:"Galocha", photo:null},
+    {id:"p11", number:5,  name:"Diego", photo:null},
+    {id:"p12", number:27, name:"Álvaro", photo:null},
+    {id:"p13", number:9,  name:"Nico", photo:null},
+    {id:"p14", number:21, name:"Samu", photo:null},
+    {id:"p15", number:25, name:"Pichu", photo:null},
+    {id:"p16", number:4,  name:"Lucas", photo:null},
+    {id:"p17", number:17, name:"Yerai", photo:null}
+  ];
+
+  function timeToMinutes(t) { const [h,m] = t.split(":").map(Number); return h*60+m; }
+  function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
+
+  /* ============== LOAD / SAVE ============== */
+  async function loadMatches() {
+    try {
+      const res = await window.storage.get("oviedo_cup_matches", true);
+      matches = res ? JSON.parse(res.value) : SEED_MATCHES.slice();
+    } catch (e) { matches = SEED_MATCHES.slice(); }
+    if (!matches || matches.length === 0) matches = SEED_MATCHES.slice();
+  }
+
+  async function saveMatches() {
+    try { await window.storage.set("oviedo_cup_matches", JSON.stringify(matches), true); }
+    catch (e) { console.error(e); showToast('⚠️ Error al guardar'); }
+  }
+
+  async function loadPlayers() {
+    players = {};
+    for (const cat of CATS) {
+      try {
+        const res = await window.storage.get("oviedo_cup_players_" + cat, true);
+        players[cat] = res ? JSON.parse(res.value) : [];
+      } catch (e) {
+        players[cat] = (cat === 'infantil') ? SEED_PLAYERS_INFANTIL.slice() : [];
+      }
+    }
+    if (!players.infantil || players.infantil.length === 0) {
+      players.infantil = SEED_PLAYERS_INFANTIL.slice();
+    }
+  }
+
+  async function savePlayers(cat) {
+    try { await window.storage.set("oviedo_cup_players_" + cat, JSON.stringify(players[cat]), true); }
+    catch (e) { console.error(e); showToast('⚠️ Error al guardar jugador'); }
+  }
+
+  /* ============== MATCHES RENDER ============== */
+  function getDays() {
+    const days = [...new Set(matches.filter(m => !m.placeholder).map(m => m.day))];
+    const placeholderDays = [...new Set(matches.filter(m => m.placeholder).map(m => m.day))];
+    const allDays = [...new Set([...days, ...placeholderDays])];
+    allDays.sort((a,b) => Number(a) - Number(b));
+    return allDays;
+  }
+
+  function renderDayTabs(activeDayVal) {
+    const bar = document.getElementById('dayTabsBar');
+    const days = getDays();
+    bar.innerHTML = '';
+    days.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'day-tab' + (d === activeDayVal ? ' active' : '');
+      btn.dataset.day = d;
+      let label = DAY_LABELS[d] || ('Día ' + d);
+      label = label.replace('Sábado','Sáb').replace('Domingo','Dom').replace('Lunes','Lun').replace('Martes','Mar').replace('Miércoles','Mié');
+      btn.textContent = label;
+      btn.onclick = () => showDay(d, btn);
+      bar.appendChild(btn);
+    });
+  }
+
+  function renderDays() {
+    const days = getDays();
+    const currentActive = document.querySelector('#dayTabsBar .day-tab.active');
+    const activeDayVal = currentActive ? currentActive.dataset.day : (days[0] || null);
+    renderDayTabs(activeDayVal);
+
+    const container = document.getElementById('daysContainer');
+    container.innerHTML = '';
+
+    days.forEach((day, idx) => {
+      const section = document.createElement('div');
+      const isActive = day === activeDayVal || (activeDayVal === null && idx === 0);
+      section.className = 'day-section' + (isActive ? ' visible' : '');
+      section.id = 'day-' + day;
+
+      const addBox = document.createElement('div');
+      addBox.className = 'add-match-box';
+      addBox.innerHTML = `
+        <h3>➕ Añadir partido — ${DAY_LABELS[day] || ('Día ' + day)}</h3>
+        <div class="form-grid">
+          <div><label>Hora</label><input type="time" class="new-time" /></div>
+          <div><label>Categoría</label>
+            <select class="new-cat">
+              <option value="alevin12">Alevín Sub 12</option>
+              <option value="cadete">Cadete</option>
+              <option value="alevin11">Alevín Sub 11</option>
+              <option value="juvenil">Juvenil</option>
+              <option value="infantil">Infantil</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-full"><label>Rival</label><input type="text" class="new-rival" placeholder="Nombre del equipo rival" /></div>
+        <div class="form-grid">
+          <div><label>Campo</label><input type="text" class="new-campo" placeholder="Ej: Mareo Nº7" /></div>
+          <div><label>Ubicación GPS</label>
+            <select class="new-gps">
+              <option value="MAREO">Mareo</option>
+              <option value="MAXIMINO">Maximino Martínez Suárez</option>
+            </select>
+          </div>
+        </div>
+        <button class="add-match-submit">Guardar partido</button>
+      `;
+      addBox.querySelector('.add-match-submit').onclick = () => addMatch(day, addBox);
+      section.appendChild(addBox);
+
+      const dayMatches = matches.filter(m => m.day === day && !m.placeholder).sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+      if (dayMatches.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-msg';
+        empty.textContent = 'No hay partidos programados todavía para este día.';
+        section.appendChild(empty);
+      }
+
+      dayMatches.forEach(m => section.appendChild(renderMatchCard(m)));
+      container.appendChild(section);
+    });
+
+    let addDayWrap = document.getElementById('addDayWrap');
+    if (addDayWrap) addDayWrap.remove();
+    addDayWrap = document.createElement('div');
+    addDayWrap.className = 'add-match-box';
+    addDayWrap.id = 'addDayWrap';
+    addDayWrap.style.marginTop = '4px';
+    addDayWrap.innerHTML = `
+      <h3>📅 Añadir nuevo día</h3>
+      <div class="form-grid">
+        <div><label>Día (número)</label><input type="text" class="new-day-num" placeholder="Ej: 22" /></div>
+        <div><label>Etiqueta</label><input type="text" class="new-day-label" placeholder="Ej: Lunes 22" /></div>
+      </div>
+      <button class="add-match-submit">Crear día</button>
+    `;
+    addDayWrap.querySelector('.add-match-submit').onclick = () => {
+      const num = addDayWrap.querySelector('.new-day-num').value.trim();
+      const label = addDayWrap.querySelector('.new-day-label').value.trim();
+      if (!num) { showToast('⚠️ Indica el número de día'); return; }
+      DAY_LABELS[num] = label || ('Día ' + num);
+      if (!getDays().includes(num)) {
+        matches.push({id:'placeholder-'+num, day:num, time:'00:00', cat:'_placeholder', rival:'', campo:'', gps:'MAREO', result:null, placeholder:true});
+      }
+      saveMatches().then(() => { renderDays(); showToast('✅ Día añadido'); });
+    };
+    document.getElementById('main-partidos').appendChild(addDayWrap);
+  }
+
+  function renderMatchCard(m) {
+    const card = document.createElement('div');
+    card.className = 'match-card ' + m.cat;
+    card.dataset.id = m.id;
+    const resultHtml = m.result ? `<span class="result-pill">${m.result}</span>` : '';
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="badge">${CATEGORY_LABELS[m.cat] || m.cat}</span>
+        <span class="match-time">${m.time}</span>
+      </div>
+      <div class="rival-row">
+        <span class="rival-name"><span class="rival-label">vs </span>${escapeHtml(m.rival)}</span>
+        ${resultHtml}
+      </div>
+      <div class="card-bottom">
+        <div class="campo-info"><span>Campo</span><strong>${escapeHtml(m.campo)}</strong></div>
+        <a class="gps-btn" href="${FIELD_URLS[m.gps] || FIELD_URLS.MAREO}" target="_blank"><span class="pin-icon">📍</span> GPS</a>
+      </div>
+      <div class="card-admin-row">
+        <input type="text" class="result-input result-local" maxlength="2" placeholder="0" value="${m.result ? m.result.split('-')[0] : ''}" />
+        <span style="font-weight:800;">-</span>
+        <input type="text" class="result-input result-visit" maxlength="2" placeholder="0" value="${m.result ? m.result.split('-')[1] : ''}" />
+        <button class="save-result-btn">Guardar resultado</button>
+        <button class="delete-match-btn">Eliminar</button>
+      </div>
+    `;
+    card.querySelector('.save-result-btn').onclick = () => {
+      const a = card.querySelector('.result-local').value.trim();
+      const b = card.querySelector('.result-visit').value.trim();
+      if (a === '' || b === '') { showToast('⚠️ Rellena ambos goles'); return; }
+      m.result = a + '-' + b;
+      saveMatches().then(() => { renderDays(); showToast('✅ Resultado guardado'); });
+    };
+    card.querySelector('.delete-match-btn').onclick = () => {
+      if (!confirm('¿Eliminar este partido?')) return;
+      matches = matches.filter(x => x.id !== m.id);
+      saveMatches().then(() => { renderDays(); showToast('🗑️ Partido eliminado'); });
+    };
+    return card;
+  }
+
+  function addMatch(day, box) {
+    const time = box.querySelector('.new-time').value;
+    const cat = box.querySelector('.new-cat').value;
+    const rival = box.querySelector('.new-rival').value.trim();
+    const campo = box.querySelector('.new-campo').value.trim();
+    const gps = box.querySelector('.new-gps').value;
+    if (!time || !rival || !campo) { showToast('⚠️ Rellena hora, rival y campo'); return; }
+    matches.push({ id: 'm' + Date.now(), day, time, cat, rival, campo, gps, result: null });
+    saveMatches().then(() => { renderDays(); showToast('✅ Partido añadido'); });
+  }
+
+  /* ============== PLAYERS RENDER ============== */
+  function renderAllPlayerSections() {
+    CATS.forEach(cat => renderPlayerSection(cat));
+  }
+
+  function renderPlayerSection(cat) {
+    const addBox = document.querySelector('.add-player-box[data-cat="' + cat + '"]');
+    addBox.innerHTML = `
+      <h3>➕ Añadir jugador — ${CATEGORY_LABELS[cat]}</h3>
+      <div class="photo-upload-row">
+        <div class="photo-preview placeholder" id="preview-${cat}">👤</div>
+        <label class="photo-input-label" for="fileinput-${cat}">📷 Subir foto</label>
+        <input type="file" accept="image/*" id="fileinput-${cat}" style="display:none;">
+      </div>
+      <div class="form-grid">
+        <div><label>Dorsal</label><input type="text" class="new-player-number" placeholder="Ej: 7" /></div>
+        <div><label>Nombre</label><input type="text" class="new-player-name" placeholder="Ej: Marcos" /></div>
+      </div>
+      <button class="add-player-submit">Guardar jugador</button>
+    `;
+
+    const preview = addBox.querySelector('#preview-' + cat);
+    const fileInput = addBox.querySelector('#fileinput-' + cat);
+    let pendingPhoto = null;
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      resizeImage(file, 200, 200, (dataUrl) => {
+        pendingPhoto = dataUrl;
+        preview.style.backgroundImage = `url(${dataUrl})`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+        preview.classList.remove('placeholder');
+        preview.textContent = '';
+      });
+    });
+
+    addBox.querySelector('.add-player-submit').onclick = () => {
+      const number = addBox.querySelector('.new-player-number').value.trim();
+      const name = addBox.querySelector('.new-player-name').value.trim();
+      if (!name) { showToast('⚠️ Indica el nombre del jugador'); return; }
+      if (!players[cat]) players[cat] = [];
+      players[cat].push({ id: 'p' + Date.now(), number: number || '-', name, photo: pendingPhoto });
+      savePlayers(cat).then(() => {
+        renderPlayerList(cat);
+        addBox.querySelector('.new-player-number').value = '';
+        addBox.querySelector('.new-player-name').value = '';
+        fileInput.value = '';
+        pendingPhoto = null;
+        preview.style.backgroundImage = '';
+        preview.classList.add('placeholder');
+        preview.textContent = '👤';
+        showToast('✅ Jugador añadido');
+      });
+    };
+
+    renderPlayerList(cat);
+  }
+
+  function renderPlayerList(cat) {
+    const list = document.querySelector('.player-list[data-cat-players="' + cat + '"]');
+    list.innerHTML = '';
+    const catPlayers = players[cat] || [];
+
+    if (catPlayers.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-msg';
+      empty.textContent = 'Todavía no hay jugadores añadidos en esta categoría.';
+      list.appendChild(empty);
+      return;
+    }
+
+    catPlayers.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'player-item';
+      const photoHtml = p.photo
+        ? `<img class="player-photo" src="${p.photo}">`
+        : `<div class="player-photo placeholder">👤</div>`;
+      item.innerHTML = `
+        <span class="player-number-badge">${escapeHtml(String(p.number))}</span>
+        ${photoHtml}
+        <span class="player-name">${escapeHtml(p.name)}</span>
+        <button class="delete-player-btn">Eliminar</button>
+      `;
+      item.querySelector('.delete-player-btn').onclick = () => {
+        if (!confirm('¿Eliminar a ' + p.name + '?')) return;
+        players[cat] = players[cat].filter(x => x.id !== p.id);
+        savePlayers(cat).then(() => { renderPlayerList(cat); showToast('🗑️ Jugador eliminado'); });
+      };
+      list.appendChild(item);
+    });
+  }
+
+  function resizeImage(file, maxW, maxH, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxW) { h = h * (maxW / w); w = maxW; } }
+        else { if (h > maxH) { w = w * (maxH / h); h = maxH; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ============== NAV ============== */
+  function showMain(name, btn) {
+    document.querySelectorAll('.main-section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.main-tabs > .main-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('main-' + name).classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  function showDay(day, btn) {
+    document.querySelectorAll('.day-section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('#dayTabsBar .day-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('day-' + day).classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  function showCat(cat, btn) {
+    document.querySelectorAll('#main-equipos > .cat-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.cat-tabs > .cat-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.cat-panel[data-cat="' + cat + '"]').classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  function showSub(btn, cat, sub) {
+    const panel = document.querySelector('.cat-panel[data-cat="' + cat + '"]');
+    panel.querySelectorAll('.subpanel').forEach(p => p.classList.remove('visible'));
+    panel.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+    panel.querySelector('.subpanel[data-sub="' + sub + '"]').classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  /* ============== ADMIN / PASSWORD ============== */
+  function onAdminToggleClick() {
+    if (isAdmin) {
+      isAdmin = false;
+      document.body.classList.remove('admin-mode');
+      document.getElementById('adminToggleBtn').textContent = '🔒 Modo edición';
+      document.getElementById('adminToggleBtn').classList.remove('on');
+      showToast('Modo edición desactivado');
+    } else { openModal(); }
+  }
+
+  function openModal() {
+    document.getElementById('pwModal').classList.add('visible');
+    document.getElementById('pwError').style.display = 'none';
+    document.getElementById('pwInput').value = '';
+    setTimeout(() => document.getElementById('pwInput').focus(), 100);
+  }
+
+  function closeModal() { document.getElementById('pwModal').classList.remove('visible'); }
+
+  function checkPassword() {
+    const val = document.getElementById('pwInput').value;
+    if (val === ADMIN_PASSWORD) {
+      isAdmin = true;
+      document.body.classList.add('admin-mode');
+      document.getElementById('adminToggleBtn').textContent = '✅ Editando';
+      document.getElementById('adminToggleBtn').classList.add('on');
+      closeModal();
+      showToast('🔓 Modo edición activado');
+    } else { document.getElementById('pwError').style.display = 'block'; }
+  }
+
+  document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  /* ============== INIT ============== */
+  async function init() {
+    await loadMatches();
+    await loadPlayers();
+    renderDays();
+    renderAllPlayerSections();
+  }
+  init();
+</script>
+
+</body>
+</html>
