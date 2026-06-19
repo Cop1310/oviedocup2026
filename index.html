@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Oviedo Cup 2026 – CD Ciudad de los Ángeles</title>
+
+<!-- Firebase SDK (compat version: works with plain <script> tags, no build tools needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,6 +43,16 @@
     letter-spacing: 0.06em;
     text-transform: uppercase;
   }
+
+  .sync-status {
+    font-size: 0.62rem;
+    color: #6a6;
+    margin-top: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .sync-status.offline { color: #e74c3c; }
 
   .admin-toggle {
     position: absolute;
@@ -305,9 +320,6 @@
     object-fit: cover;
     flex-shrink: 0;
     border: 2px solid #ddd;
-  }
-
-  .photo-preview.placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -341,6 +353,10 @@
     font-size: 0.8rem;
     cursor: pointer;
     margin-top: 4px;
+  }
+
+  .add-match-submit:disabled, .add-player-submit:disabled {
+    opacity: 0.5;
   }
 
   .cat-tabs {
@@ -484,9 +500,6 @@
     object-fit: cover;
     background: #1a1a2e;
     border: 2px solid #c9a227;
-  }
-
-  .player-photo.placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -594,6 +607,7 @@
 <header>
   <h1>Oviedo Cup 2026</h1>
   <p>CD Ciudad de los Ángeles</p>
+  <div class="sync-status" id="syncStatus">🔄 Conectando...</div>
   <button class="admin-toggle" id="adminToggleBtn" onclick="onAdminToggleClick()">🔒 Modo edición</button>
 </header>
 
@@ -737,7 +751,21 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  /* ============== CONFIG ============== */
+  /* ============== FIREBASE CONFIG ============== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyDS6V2vsMXhDg6jbHsmeEa--As9FU5mGss",
+    authDomain: "oviedocup2026.firebaseapp.com",
+    databaseURL: "https://oviedocup2026-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "oviedocup2026",
+    storageBucket: "oviedocup2026.firebasestorage.app",
+    messagingSenderId: "344444290592",
+    appId: "1:344444290592:web:632e346aef573e8d551e45"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  /* ============== APP CONFIG ============== */
   const ADMIN_PASSWORD = "cdca2026"; // <-- cambia aquí la clave
   const FIELD_URLS = {
     "MAREO": "https://maps.app.goo.gl/JqyTBfT7dJ7G8Vzw7",
@@ -751,89 +779,113 @@
   const CATS = ["alevin12","cadete","alevin11","juvenil","infantil"];
 
   let isAdmin = false;
-  let matches = [];
-  let players = {}; // { cat: [ {id, number, name, photo(base64 or null)} ] }
+  let matches = {};   // keyed by firebase id -> match object
+  let players = {};   // { cat: { firebaseId: playerObj } }
 
   const SEED_MATCHES = [
-    {id:"m1",  day:"20", time:"11:00", cat:"alevin12", rival:"CD Covadonga Castañales", campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
-    {id:"m2",  day:"20", time:"11:30", cat:"cadete",   rival:"AD Vila do Corpus B",      campo:"Mareo Nº7",      gps:"MAREO", result:null},
-    {id:"m3",  day:"20", time:"11:45", cat:"alevin11", rival:"EF Jin",                   campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
-    {id:"m4",  day:"20", time:"12:45", cat:"juvenil",  rival:"CD La Braña",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
-    {id:"m5",  day:"20", time:"13:45", cat:"infantil", rival:"UD Llanera",               campo:"Mareo Nº7",      gps:"MAREO", result:null},
-    {id:"m6",  day:"20", time:"17:00", cat:"alevin12", rival:"UP Langreo B",             campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
-    {id:"m7",  day:"20", time:"17:30", cat:"cadete",   rival:"CD Deva",                  campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
-    {id:"m8",  day:"20", time:"17:45", cat:"alevin11", rival:"Alcázar CF",               campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
-    {id:"m9",  day:"20", time:"18:45", cat:"infantil", rival:"UD San Claudio",           campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
-    {id:"m10", day:"20", time:"19:15", cat:"juvenil",  rival:"Real Oviedo Internacional",campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
-    {id:"m11", day:"21", time:"9:45",  cat:"cadete",   rival:"CD Romanón",               campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
-    {id:"m12", day:"21", time:"11:45", cat:"infantil", rival:"EF Mareo",                 campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
-    {id:"m13", day:"21", time:"12:45", cat:"alevin11", rival:"Astur CF",                 campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
-    {id:"m14", day:"21", time:"13:00", cat:"juvenil",  rival:"Caudal",                   campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
-    {id:"m15", day:"21", time:"15:30", cat:"cadete",   rival:"Real Oviedo",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
-    {id:"m16", day:"21", time:"17:15", cat:"alevin12", rival:"CD Montevil",              campo:"Mareo Nº3 F8-1", gps:"MAREO", result:null}
+    {time:"11:00", day:"20", cat:"alevin12", rival:"CD Covadonga Castañales", campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {time:"11:30", day:"20", cat:"cadete",   rival:"AD Vila do Corpus B",      campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {time:"11:45", day:"20", cat:"alevin11", rival:"EF Jin",                   campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {time:"12:45", day:"20", cat:"juvenil",  rival:"CD La Braña",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {time:"13:45", day:"20", cat:"infantil", rival:"UD Llanera",               campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {time:"17:00", day:"20", cat:"alevin12", rival:"UP Langreo B",             campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {time:"17:30", day:"20", cat:"cadete",   rival:"CD Deva",                  campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {time:"17:45", day:"20", cat:"alevin11", rival:"Alcázar CF",               campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {time:"18:45", day:"20", cat:"infantil", rival:"UD San Claudio",           campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {time:"19:15", day:"20", cat:"juvenil",  rival:"Real Oviedo Internacional",campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {time:"9:45",  day:"21", cat:"cadete",   rival:"CD Romanón",               campo:"Maximino Martínez Suárez-2", gps:"MAXIMINO", result:null},
+    {time:"11:45", day:"21", cat:"infantil", rival:"EF Mareo",                 campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {time:"12:45", day:"21", cat:"alevin11", rival:"Astur CF",                 campo:"Mareo Nº3 F8-2", gps:"MAREO", result:null},
+    {time:"13:00", day:"21", cat:"juvenil",  rival:"Caudal",                   campo:"Maximino Martínez Suárez-1", gps:"MAXIMINO", result:null},
+    {time:"15:30", day:"21", cat:"cadete",   rival:"Real Oviedo",              campo:"Mareo Nº7",      gps:"MAREO", result:null},
+    {time:"17:15", day:"21", cat:"alevin12", rival:"CD Montevil",              campo:"Mareo Nº3 F8-1", gps:"MAREO", result:null}
   ];
 
   const SEED_PLAYERS_INFANTIL = [
-    {id:"p1",  number:8,  name:"Ortiz Jr", photo:null},
-    {id:"p2",  number:11, name:"Rubén", photo:null},
-    {id:"p3",  number:14, name:"Guti", photo:null},
-    {id:"p4",  number:19, name:"Alonso", photo:null},
-    {id:"p5",  number:20, name:"Ángel", photo:null},
-    {id:"p6",  number:6,  name:"Dario", photo:null},
-    {id:"p7",  number:12, name:"Talmaci", photo:null},
-    {id:"p8",  number:99, name:"Dani", photo:null},
-    {id:"p9",  number:27, name:"Polina", photo:null},
-    {id:"p10", number:28, name:"Galocha", photo:null},
-    {id:"p11", number:5,  name:"Diego", photo:null},
-    {id:"p12", number:27, name:"Álvaro", photo:null},
-    {id:"p13", number:9,  name:"Nico", photo:null},
-    {id:"p14", number:21, name:"Samu", photo:null},
-    {id:"p15", number:25, name:"Pichu", photo:null},
-    {id:"p16", number:4,  name:"Lucas", photo:null},
-    {id:"p17", number:17, name:"Yerai", photo:null}
+    {number:8,  name:"Ortiz Jr", photo:null},
+    {number:11, name:"Rubén", photo:null},
+    {number:14, name:"Guti", photo:null},
+    {number:19, name:"Alonso", photo:null},
+    {number:20, name:"Ángel", photo:null},
+    {number:6,  name:"Dario", photo:null},
+    {number:12, name:"Talmaci", photo:null},
+    {number:99, name:"Dani", photo:null},
+    {number:27, name:"Polina", photo:null},
+    {number:28, name:"Galocha", photo:null},
+    {number:5,  name:"Diego", photo:null},
+    {number:27, name:"Álvaro", photo:null},
+    {number:9,  name:"Nico", photo:null},
+    {number:21, name:"Samu", photo:null},
+    {number:25, name:"Pichu", photo:null},
+    {number:4,  name:"Lucas", photo:null},
+    {number:17, name:"Yerai", photo:null}
   ];
 
   function timeToMinutes(t) { const [h,m] = t.split(":").map(Number); return h*60+m; }
   function escapeHtml(str) { const div = document.createElement('div'); div.textContent = str || ''; return div.innerHTML; }
 
-  /* ============== LOAD / SAVE ============== */
-  async function loadMatches() {
-    try {
-      const res = await window.storage.get("oviedo_cup_matches", true);
-      matches = res ? JSON.parse(res.value) : SEED_MATCHES.slice();
-    } catch (e) { matches = SEED_MATCHES.slice(); }
-    if (!matches || matches.length === 0) matches = SEED_MATCHES.slice();
-  }
-
-  async function saveMatches() {
-    try { await window.storage.set("oviedo_cup_matches", JSON.stringify(matches), true); }
-    catch (e) { console.error(e); showToast('⚠️ Error al guardar'); }
-  }
-
-  async function loadPlayers() {
-    players = {};
-    for (const cat of CATS) {
-      try {
-        const res = await window.storage.get("oviedo_cup_players_" + cat, true);
-        players[cat] = res ? JSON.parse(res.value) : [];
-      } catch (e) {
-        players[cat] = (cat === 'infantil') ? SEED_PLAYERS_INFANTIL.slice() : [];
-      }
-    }
-    if (!players.infantil || players.infantil.length === 0) {
-      players.infantil = SEED_PLAYERS_INFANTIL.slice();
+  /* ============== FIREBASE LIVE LISTENERS ============== */
+  function setSyncStatus(connected) {
+    const el = document.getElementById('syncStatus');
+    if (connected) {
+      el.textContent = '🟢 Sincronizado en directo';
+      el.classList.remove('offline');
+    } else {
+      el.textContent = '🔴 Sin conexión';
+      el.classList.add('offline');
     }
   }
 
-  async function savePlayers(cat) {
-    try { await window.storage.set("oviedo_cup_players_" + cat, JSON.stringify(players[cat]), true); }
-    catch (e) { console.error(e); showToast('⚠️ Error al guardar jugador'); }
+  db.ref('.info/connected').on('value', (snap) => {
+    setSyncStatus(snap.val() === true);
+  });
+
+  async function seedIfEmpty() {
+    const matchesSnap = await db.ref('matches').get();
+    if (!matchesSnap.exists()) {
+      const updates = {};
+      SEED_MATCHES.forEach(m => {
+        const id = db.ref('matches').push().key;
+        updates['matches/' + id] = m;
+      });
+      await db.ref().update(updates);
+    }
+    const playersSnap = await db.ref('players/infantil').get();
+    if (!playersSnap.exists()) {
+      const updates = {};
+      SEED_PLAYERS_INFANTIL.forEach(p => {
+        const id = db.ref('players/infantil').push().key;
+        updates['players/infantil/' + id] = p;
+      });
+      await db.ref().update(updates);
+    }
+  }
+
+  function listenMatches() {
+    db.ref('matches').on('value', (snap) => {
+      matches = snap.val() || {};
+      renderDays();
+    });
+  }
+
+  function listenPlayers() {
+    CATS.forEach(cat => {
+      db.ref('players/' + cat).on('value', (snap) => {
+        players[cat] = snap.val() || {};
+        renderPlayerList(cat);
+      });
+    });
   }
 
   /* ============== MATCHES RENDER ============== */
+  function getMatchEntries() {
+    return Object.entries(matches).map(([id, m]) => ({ id, ...m }));
+  }
+
   function getDays() {
-    const days = [...new Set(matches.filter(m => !m.placeholder).map(m => m.day))];
-    const placeholderDays = [...new Set(matches.filter(m => m.placeholder).map(m => m.day))];
+    const allMatches = getMatchEntries();
+    const days = [...new Set(allMatches.filter(m => !m.placeholder).map(m => m.day))];
+    const placeholderDays = [...new Set(allMatches.filter(m => m.placeholder).map(m => m.day))];
     const allDays = [...new Set([...days, ...placeholderDays])];
     allDays.sort((a,b) => Number(a) - Number(b));
     return allDays;
@@ -863,6 +915,8 @@
 
     const container = document.getElementById('daysContainer');
     container.innerHTML = '';
+
+    const allMatches = getMatchEntries();
 
     days.forEach((day, idx) => {
       const section = document.createElement('div');
@@ -901,7 +955,7 @@
       addBox.querySelector('.add-match-submit').onclick = () => addMatch(day, addBox);
       section.appendChild(addBox);
 
-      const dayMatches = matches.filter(m => m.day === day && !m.placeholder).sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+      const dayMatches = allMatches.filter(m => m.day === day && !m.placeholder).sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
 
       if (dayMatches.length === 0) {
         const empty = document.createElement('div');
@@ -928,15 +982,15 @@
       </div>
       <button class="add-match-submit">Crear día</button>
     `;
-    addDayWrap.querySelector('.add-match-submit').onclick = () => {
+    addDayWrap.querySelector('.add-match-submit').onclick = async () => {
       const num = addDayWrap.querySelector('.new-day-num').value.trim();
       const label = addDayWrap.querySelector('.new-day-label').value.trim();
       if (!num) { showToast('⚠️ Indica el número de día'); return; }
       DAY_LABELS[num] = label || ('Día ' + num);
       if (!getDays().includes(num)) {
-        matches.push({id:'placeholder-'+num, day:num, time:'00:00', cat:'_placeholder', rival:'', campo:'', gps:'MAREO', result:null, placeholder:true});
+        await db.ref('matches').push({ day: num, time: '00:00', cat: '_placeholder', rival: '', campo: '', gps: 'MAREO', result: null, placeholder: true });
       }
-      saveMatches().then(() => { renderDays(); showToast('✅ Día añadido'); });
+      showToast('✅ Día añadido');
     };
     document.getElementById('main-partidos').appendChild(addDayWrap);
   }
@@ -967,43 +1021,43 @@
         <button class="delete-match-btn">Eliminar</button>
       </div>
     `;
-    card.querySelector('.save-result-btn').onclick = () => {
+    card.querySelector('.save-result-btn').onclick = async () => {
       const a = card.querySelector('.result-local').value.trim();
       const b = card.querySelector('.result-visit').value.trim();
       if (a === '' || b === '') { showToast('⚠️ Rellena ambos goles'); return; }
-      m.result = a + '-' + b;
-      saveMatches().then(() => { renderDays(); showToast('✅ Resultado guardado'); });
+      await db.ref('matches/' + m.id).update({ result: a + '-' + b });
+      showToast('✅ Resultado guardado');
     };
-    card.querySelector('.delete-match-btn').onclick = () => {
+    card.querySelector('.delete-match-btn').onclick = async () => {
       if (!confirm('¿Eliminar este partido?')) return;
-      matches = matches.filter(x => x.id !== m.id);
-      saveMatches().then(() => { renderDays(); showToast('🗑️ Partido eliminado'); });
+      await db.ref('matches/' + m.id).remove();
+      showToast('🗑️ Partido eliminado');
     };
     return card;
   }
 
-  function addMatch(day, box) {
+  async function addMatch(day, box) {
     const time = box.querySelector('.new-time').value;
     const cat = box.querySelector('.new-cat').value;
     const rival = box.querySelector('.new-rival').value.trim();
     const campo = box.querySelector('.new-campo').value.trim();
     const gps = box.querySelector('.new-gps').value;
     if (!time || !rival || !campo) { showToast('⚠️ Rellena hora, rival y campo'); return; }
-    matches.push({ id: 'm' + Date.now(), day, time, cat, rival, campo, gps, result: null });
-    saveMatches().then(() => { renderDays(); showToast('✅ Partido añadido'); });
+    await db.ref('matches').push({ day, time, cat, rival, campo, gps, result: null });
+    showToast('✅ Partido añadido');
   }
 
   /* ============== PLAYERS RENDER ============== */
-  function renderAllPlayerSections() {
-    CATS.forEach(cat => renderPlayerSection(cat));
+  function renderAllPlayerForms() {
+    CATS.forEach(cat => renderPlayerForm(cat));
   }
 
-  function renderPlayerSection(cat) {
+  function renderPlayerForm(cat) {
     const addBox = document.querySelector('.add-player-box[data-cat="' + cat + '"]');
     addBox.innerHTML = `
       <h3>➕ Añadir jugador — ${CATEGORY_LABELS[cat]}</h3>
       <div class="photo-upload-row">
-        <div class="photo-preview placeholder" id="preview-${cat}">👤</div>
+        <div class="photo-preview" id="preview-${cat}">👤</div>
         <label class="photo-input-label" for="fileinput-${cat}">📷 Subir foto</label>
         <input type="file" accept="image/*" id="fileinput-${cat}" style="display:none;">
       </div>
@@ -1016,47 +1070,52 @@
 
     const preview = addBox.querySelector('#preview-' + cat);
     const fileInput = addBox.querySelector('#fileinput-' + cat);
+    const submitBtn = addBox.querySelector('.add-player-submit');
     let pendingPhoto = null;
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      resizeImage(file, 200, 200, (dataUrl) => {
+      resizeImage(file, 160, 160, (dataUrl) => {
         pendingPhoto = dataUrl;
         preview.style.backgroundImage = `url(${dataUrl})`;
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
-        preview.classList.remove('placeholder');
         preview.textContent = '';
       });
     });
 
-    addBox.querySelector('.add-player-submit').onclick = () => {
+    submitBtn.onclick = async () => {
       const number = addBox.querySelector('.new-player-number').value.trim();
       const name = addBox.querySelector('.new-player-name').value.trim();
       if (!name) { showToast('⚠️ Indica el nombre del jugador'); return; }
-      if (!players[cat]) players[cat] = [];
-      players[cat].push({ id: 'p' + Date.now(), number: number || '-', name, photo: pendingPhoto });
-      savePlayers(cat).then(() => {
-        renderPlayerList(cat);
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Guardando...';
+      try {
+        await db.ref('players/' + cat).push({ number: number || '-', name, photo: pendingPhoto });
         addBox.querySelector('.new-player-number').value = '';
         addBox.querySelector('.new-player-name').value = '';
         fileInput.value = '';
         pendingPhoto = null;
         preview.style.backgroundImage = '';
-        preview.classList.add('placeholder');
         preview.textContent = '👤';
         showToast('✅ Jugador añadido');
-      });
+      } catch (err) {
+        console.error(err);
+        showToast('⚠️ Error al guardar (foto quizá muy grande)');
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Guardar jugador';
     };
-
-    renderPlayerList(cat);
   }
 
   function renderPlayerList(cat) {
     const list = document.querySelector('.player-list[data-cat-players="' + cat + '"]');
+    if (!list) return;
     list.innerHTML = '';
-    const catPlayers = players[cat] || [];
+    const catPlayersObj = players[cat] || {};
+    const catPlayers = Object.entries(catPlayersObj).map(([id, p]) => ({ id, ...p }));
 
     if (catPlayers.length === 0) {
       const empty = document.createElement('div');
@@ -1069,19 +1128,20 @@
     catPlayers.forEach(p => {
       const item = document.createElement('div');
       item.className = 'player-item';
-      const photoHtml = p.photo
-        ? `<img class="player-photo" src="${p.photo}">`
-        : `<div class="player-photo placeholder">👤</div>`;
+      const photoStyle = p.photo
+        ? `style="background-image:url(${p.photo});background-size:cover;background-position:center;"`
+        : '';
+      const photoContent = p.photo ? '' : '👤';
       item.innerHTML = `
         <span class="player-number-badge">${escapeHtml(String(p.number))}</span>
-        ${photoHtml}
+        <div class="player-photo" ${photoStyle}>${photoContent}</div>
         <span class="player-name">${escapeHtml(p.name)}</span>
         <button class="delete-player-btn">Eliminar</button>
       `;
-      item.querySelector('.delete-player-btn').onclick = () => {
+      item.querySelector('.delete-player-btn').onclick = async () => {
         if (!confirm('¿Eliminar a ' + p.name + '?')) return;
-        players[cat] = players[cat].filter(x => x.id !== p.id);
-        savePlayers(cat).then(() => { renderPlayerList(cat); showToast('🗑️ Jugador eliminado'); });
+        await db.ref('players/' + cat + '/' + p.id).remove();
+        showToast('🗑️ Jugador eliminado');
       };
       list.appendChild(item);
     });
@@ -1099,7 +1159,7 @@
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, w, h);
-        callback(canvas.toDataURL('image/jpeg', 0.75));
+        callback(canvas.toDataURL('image/jpeg', 0.7));
       };
       img.src = e.target.result;
     };
@@ -1179,10 +1239,10 @@
 
   /* ============== INIT ============== */
   async function init() {
-    await loadMatches();
-    await loadPlayers();
-    renderDays();
-    renderAllPlayerSections();
+    renderAllPlayerForms();
+    await seedIfEmpty();
+    listenMatches();
+    listenPlayers();
   }
   init();
 </script>
